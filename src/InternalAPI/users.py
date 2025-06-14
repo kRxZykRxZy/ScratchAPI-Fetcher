@@ -6,4 +6,4 @@ from API_Helper.limiter import limiter
 def userProfile(username):
   res = requests.get(f'https://api.scratch.mit.edu/users/{username}').json()
   profile = res["profile"]
-  return jsonify({ "username": res["username"], "bio": profile["bio"], "status": profile["status"] }) 
+  return jsonify({ "id": res["id"] "username": res["username"], "bio": profile["bio"], "status": profile["status"] }) 
