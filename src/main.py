@@ -1,9 +1,24 @@
-from __init__ import app
-from flask import *
+from flask import Flask, jsonify
+from InternalAPI import internal_register_routes
+import os
+from dotenv import load_dotenv
+from flask_cors import CORS, cross_origin
+from InternalAPI.API_Helpers.limiter import limiter
+
+load_dotenv()
+
+app = Flask(__name__)
+
+# Set up Flask-Limiter
+limiter.init_app(app)
+
+CORS(app, supports_credentials=True, origins=[os.getenv('HOSTED_ON'),'http://localhost'])
+
+print("DEBUG: ", os.getenv('DEBUG'))
 
 @app.route("/")
 def hello_world():
-    return "<p>API is running.</p>"
+    return "<p>CodeTorch Block Compiler API is running.</p>"
 
 # all error handlers
 @app.errorhandler(500)
@@ -29,7 +44,6 @@ def unauthorized(e):
 @app.errorhandler(409)
 def conflict(e):
     return jsonify({"status": "409", "error": "Conflict"}), 409
-  
 @app.errorhandler(404)
 def page_not_found(e):
     return jsonify({"status": "404", "error": "Page not found"}), 404
@@ -38,4 +52,14 @@ def page_not_found(e):
 def too_many_requests(e):
     return jsonify({"status": "429", "error": "Too many requests"}), 429
 
-app.run(host='0.0.0.0', port=5000)
+
+internal_register_routes(app)
+
+@app.route("/<path:path>", methods=["GET"])
+@cross_origin(origins="*")
+@limiter.exempt
+def static_files(path):    
+    return app.send_static_file(path)
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)
